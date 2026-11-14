@@ -1,6 +1,8 @@
 apply plugin: 'com.android.application'
 apply plugin: 'org.telegram.build-app-plugin'
 
+def nivoraMapsApiKey = (project.findProperty("NIVORA_MAPS_API_KEY") ?: System.getenv("NIVORA_MAPS_API_KEY") ?: "").toString()
+
 repositories {
     mavenCentral()
     google()
@@ -49,13 +51,6 @@ android {
     }
 
     signingConfigs {
-        debug {
-            storeFile file("../TMessagesProj/config/release.keystore")
-            storePassword RELEASE_STORE_PASSWORD
-            keyAlias RELEASE_KEY_ALIAS
-            keyPassword RELEASE_KEY_PASSWORD
-        }
-
         release {
             storeFile file("../TMessagesProj/config/release.keystore")
             storePassword RELEASE_STORE_PASSWORD
@@ -74,8 +69,6 @@ android {
         debug {
             debuggable true
             jniDebuggable true
-            signingConfig signingConfigs.debug
-            applicationIdSuffix ".web"
             minifyEnabled false
             multiDexEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), '../TMessagesProj/proguard-rules.pro'
@@ -135,6 +128,7 @@ android {
     }
 
     defaultConfig {
+        manifestPlaceholders = [NIVORA_MAPS_API_KEY: nivoraMapsApiKey]
         minSdkVersion 23
         targetSdkVersion 36
         versionName APP_VERSION_NAME
