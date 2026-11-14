@@ -153,6 +153,9 @@ android {
         if (!(nivoraApiId ==~ /[0-9]+/)) {
             throw new GradleException("NIVORA_API_ID must contain digits only")
         }
+        if (!nivoraApiHash.isEmpty() && !(nivoraApiHash ==~ /[0-9a-fA-F]{32}/)) {
+            throw new GradleException("NIVORA_API_HASH must be a 32-character hexadecimal value")
+        }
         buildConfigField "int", "NIVORA_API_ID", nivoraApiId
         buildConfigField "String", "NIVORA_API_HASH", "\"${nivoraApiHash}\""
 
