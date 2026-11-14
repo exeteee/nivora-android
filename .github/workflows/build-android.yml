@@ -7,15 +7,19 @@ on:
       - "work/**"
   workflow_dispatch:
 
+# Keep only the newest run for a branch. Older checkouts are cancelled automatically.
+concurrency:
+  group: nivora-android-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
 jobs:
-  source-check:
-    name: Validate Nivora source configuration
+  build:
+    name: Validate source and build test APK when configured
     runs-on: ubuntu-latest
-    outputs:
-      build_ready: ${{ steps.config.outputs.build_ready }}
+    timeout-minutes: 120
     steps:
       - name: Check out source and submodules
         uses: actions/checkout@v6
@@ -53,40 +57,30 @@ jobs:
             echo "::notice::APK build skipped. Add NIVORA_API_ID, NIVORA_API_HASH and GOOGLE_SERVICES_JSON to repository Actions secrets."
           fi
 
-  debug-apk:
-    name: Build test APK
-    needs: source-check
-    if: needs.source-check.outputs.build_ready == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 120
-    steps:
-      - name: Check out source and submodules
-        uses: actions/checkout@v6
-        with:
-          submodules: recursive
-          fetch-depth: 1
-
       - name: Set up Java 17
+        if: steps.config.outputs.build_ready == 'true'
         uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
 
       - name: Set up Android SDK
+        if: steps.config.outputs.build_ready == 'true'
         uses: android-actions/setup-android@v4
-        with:
-          packages: ''
 
       - name: Install Android SDK, NDK and CMake
+        if: steps.config.outputs.build_ready == 'true'
         run: |
           sdkmanager "platforms;android-36" "build-tools;36.0.0" "ndk;27.2.12479018" "cmake;3.22.1"
 
       - name: Set up Gradle
+        if: steps.config.outputs.build_ready == 'true'
         uses: gradle/actions/setup-gradle@v6
         with:
           cache-read-only: false
 
       - name: Prepare private app configuration
+        if: steps.config.outputs.build_ready == 'true'
         shell: bash
         env:
           API_ID: ${{ secrets.NIVORA_API_ID }}
@@ -104,9 +98,11 @@ jobs:
           echo "NIVORA_MAPS_API_KEY=$MAPS_API_KEY" >> "$GITHUB_ENV"
 
       - name: Build Nivora Debug APK
+        if: steps.config.outputs.build_ready == 'true'
         run: ./gradlew --no-daemon --max-workers=2 --stacktrace :TMessagesProj_AppStandalone:assembleAfatDebug
 
       - name: Upload test APK
+        if: steps.config.outputs.build_ready == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: nivora-debug-apk
