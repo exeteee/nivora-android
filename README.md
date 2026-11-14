@@ -6,7 +6,7 @@ The app keeps Telegram's core messaging protocol and features while adding a sep
 
 ## Project status
 
-This repository is the source project. A working APK has not yet been built or device-tested. The project still needs Nivora's own Telegram API credentials, a matching Firebase configuration for background notifications, and a dedicated release-signing key before a distributable release is ready.
+This repository is the source project. A working APK has not yet been built or device-tested. The project still needs Nivora's own Telegram API credentials and a matching Firebase configuration for background notifications. Its Android application ID is `com.nivora.chat`. A dedicated, persistent release-signing key is required before a distributable release is ready.
 
 See:
 - [Russian setup guide](docs/SETUP_RU.md)
@@ -21,7 +21,7 @@ The upstream project currently documents Android Studio 2025.1.4, Android SDK 36
 git clone --recursive https://github.com/exeteee/nivora-android.git
 ```
 
-Provide your own `NIVORA_API_ID` and `NIVORA_API_HASH` as Gradle properties or environment variables. Do not commit personal credentials, Firebase configuration, or release-signing material.
+Provide `NIVORA_API_ID`, `NIVORA_API_HASH` and a Firebase `google-services.json` for package `com.nivora.chat` through GitHub Actions Secrets as described in [docs/SETUP_RU.md](docs/SETUP_RU.md). Do not commit personal credentials, Firebase configuration, or release-signing material. The Actions workflow builds a test Debug APK; it is not a signed public release.
 
 ## Upstream and license
 
