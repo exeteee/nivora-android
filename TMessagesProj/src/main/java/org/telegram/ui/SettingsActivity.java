@@ -741,18 +741,7 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
         });
 
         final Set<String> suggestions = getMessagesController().pendingSuggestions;
-        if (suggestions.contains("PREMIUM_GRACE")) {
-            items.add(SuggestionCell.Factory.of(
-                getString(R.string.GraceSuggestionTitle),
-                getString(R.string.GraceSuggestionMessage),
-                null, null,
-                getString(R.string.GraceSuggestionButton), v -> {
-                    Browser.openUrl(getContext(), getMessagesController().premiumManageSubscriptionUrl);
-                    getMessagesController().removeSuggestion(0, "PREMIUM_GRACE");
-                }
-            ));
-            items.add(UItem.asShadow(null));
-        } else if (suggestions.contains("VALIDATE_PHONE_NUMBER") && getUserConfig().getCurrentUser() != null) {
+        if (suggestions.contains("VALIDATE_PHONE_NUMBER") && getUserConfig().getCurrentUser() != null) {
             items.add(SuggestionCell.Factory.of(
                 formatString(R.string.CheckPhoneNumber, PhoneFormat.getInstance().format("+" + getUserConfig().getCurrentUser().phone)),
                 replaceSingleTag(getString(R.string.CheckPhoneNumberInfo), () -> {
@@ -812,9 +801,6 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
             items.add(UItem.asShadow(null));
         }
 
-        if (!getMessagesController().premiumFeaturesBlocked()) {
-            items.add(SettingCell.Factory.of(11, 0xFFB659FF, 0xFF617CFF, R.drawable.settings_premium, getString(R.string.TelegramPremium)));
-        }
         if (getMessagesController().starsPurchaseAvailable()) {
             StarsController c = StarsController.getInstance(currentAccount);
             long balance = c.getBalance().amount;
@@ -827,9 +813,6 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
             items.add(SettingCell.Factory.of(13, 0xFF1BA4ED, 0xFF1488E1, R.drawable.filled_gram_earnings, getString(R.string.GramEarnings), null, c.balanceAvailable() && balance > 0 ? StarsIntroActivity.formatStarsAmount(c.getBalance(), 0.85f, ' ') : ""));
         }
 
-        if (!getMessagesController().premiumFeaturesBlocked()) {
-            items.add(SettingCell.Factory.of(15, 0xFFF45255, 0xFFDF3955, R.drawable.settings_business, getString(R.string.TelegramBusiness)));
-        }
         if (!getMessagesController().premiumPurchaseBlocked()) {
             items.add(SettingCell.Factory.of(16, 0xFFF38B31, 0xFFE26314, R.drawable.settings_gift, getString(R.string.SendAGift)));
         }
@@ -945,9 +928,6 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
                 presentSettingFragment(new LanguageSelectActivity());
                 break;
 
-            case 11:
-                presentSettingFragment(new PremiumPreviewFragment("settings"));
-                break;
             case 12:
                 presentSettingFragment(new StarsIntroActivity());
                 break;
@@ -956,9 +936,6 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
                 break;
             case 25:
                 presentSettingFragment(new WalletActivity());
-                break;
-            case 15:
-                presentSettingFragment(new PremiumPreviewFragment(PremiumPreviewFragment.FEATURES_BUSINESS, "settings"));
                 break;
             case 16:
                 UserSelectorBottomSheet.open(0, BirthdayController.getInstance(UserConfig.selectedAccount).getState());

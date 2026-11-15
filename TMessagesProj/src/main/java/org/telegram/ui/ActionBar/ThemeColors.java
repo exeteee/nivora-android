@@ -11,8 +11,8 @@ import java.util.HashMap;
 
 public class ThemeColors {
 
-    public static final int TELEGRAM_COLOR = 0xFF229AF0;        // -14509328
-    public static final int TELEGRAM_COLOR_TEXT = 0xFF298ACF;   // -14054705
+    public static final int TELEGRAM_COLOR = 0xFF007AFF;        // -14509328
+    public static final int TELEGRAM_COLOR_TEXT = 0xFF0066D6;   // -14054705
     public static final int DEFAULT_BLACK_TEXT = 0xFF1A1D21;   // -15065823
 
     private static SparseArray<String> colorKeysMap;
@@ -130,7 +130,7 @@ public class ThemeColors {
         defaultColors[key_settings_listSelector] = 0x1d000010;
         defaultColors[key_radioBackground] = 0xffb3b3b3;
         defaultColors[key_radioBackgroundChecked] = TELEGRAM_COLOR;
-        defaultColors[key_windowBackgroundGray] = 0xffF1F1F3;
+        defaultColors[key_windowBackgroundGray] = 0xffF2F2F7;
         defaultColors[key_windowBackgroundGrayShadow] = 0xff000000;
         defaultColors[key_emptyListPlaceholder] = 0xff73787b;
         defaultColors[key_divider] = 0xffd9d9d9;
@@ -347,9 +347,9 @@ public class ThemeColors {
         defaultColors[key_chat_compact_reactionText] = 0xFF1A1D21;
         defaultColors[key_chat_compact_reactionBackgroundSelected] = 0xFF1A1D21;
         defaultColors[key_chat_compact_reactionTextSelected] = 0xFFFFFFFF;
-        defaultColors[key_chat_outBubble] = 0xffefffde;
+        defaultColors[key_chat_outBubble] = 0xffDCEBFF;
         defaultColors[key_chat_outBubbleGradientSelectedOverlay] = 0x14000000;
-        defaultColors[key_chat_outBubbleSelected] = 0xffd9f7c5;
+        defaultColors[key_chat_outBubbleSelected] = 0xffC6DFFF;
         defaultColors[key_chat_outBubbleShadow] = 0xff1e750c;
         defaultColors[key_chat_inMediaIcon] = 0xffffffff;
         defaultColors[key_chat_inMediaIconSelected] = 0xffeff8fe;

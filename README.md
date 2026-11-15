@@ -1,46 +1,30 @@
-## Telegram messenger for Android
+# Nivora for Android
 
-[Telegram](https://telegram.org) is a messaging app with a focus on speed and security. It’s superfast, simple and free.
-This repo contains the official source code for [Telegram App for Android](https://play.google.com/store/apps/details?id=org.telegram.messenger).
+Nivora is an independent, unofficial Android client built from the open-source Telegram for Android codebase. It is not affiliated with or endorsed by Telegram.
 
-## Creating your Telegram Application
+The app keeps Telegram's core messaging protocol and features while adding a separate visual identity and a carefully scoped set of interface changes. The first implementation pass applies Nivora branding, an iOS-inspired light palette, and removes Premium/Business upsell entry points from Settings. This does **not** bypass Telegram server-side Premium restrictions or unlock paid account features.
 
-We welcome all developers to use our API and source code to create applications on our platform.
-There are several things we require from **all developers** for the moment.
+## Project status
 
-1. [**Obtain your own api_id**](https://core.telegram.org/api/obtaining_api_id) for your application.
-2. Please **do not** use the name Telegram for your app — or make sure your users understand that it is unofficial.
-3. Kindly **do not** use our standard logo (white paper plane in a blue circle) as your app's logo.
-3. Please study our [**security guidelines**](https://core.telegram.org/mtproto/security_guidelines) and take good care of your users' data and privacy.
-4. Please remember to publish **your** code too in order to comply with the licences.
+This repository is the source project. A working APK has not yet been built or device-tested. The project still needs Nivora's own Telegram API credentials and a matching Firebase configuration for background notifications. Its Android application ID is `com.nivora.chat`. A dedicated, persistent release-signing key is required before a distributable release is ready.
 
-### API, Protocol documentation
+See:
+- [Russian setup guide](docs/SETUP_RU.md)
+- [Product scope and implementation status](docs/STATUS.md)
+- [Security notes](docs/SECURITY.md)
 
-Telegram API manuals: https://core.telegram.org/api
+## Build requirements
 
-MTproto protocol manuals: https://core.telegram.org/mtproto
+The upstream project currently documents Android Studio 2025.1.4, Android SDK 36, and Android NDK 27.2.12479018. Clone with submodules:
 
-### Compilation Guide
+```bash
+git clone --recursive https://github.com/exeteee/nivora-android.git
+```
 
-**Note**: In order to support [reproducible builds](https://core.telegram.org/reproducible-builds), this repo contains dummy release.keystore,  google-services.json and filled variables inside BuildVars.java. Before publishing your own APKs please make sure to replace all these files with your own.
+Provide `NIVORA_API_ID`, `NIVORA_API_HASH` and a Firebase `google-services.json` for package `com.nivora.chat` through GitHub Actions Secrets as described in [docs/SETUP_RU.md](docs/SETUP_RU.md). Do not commit personal credentials, Firebase configuration, or release-signing material. The Actions workflow builds a test Debug APK; it is not a signed public release.
 
-You will require Android Studio 2025.1.4, Android NDK 27.2.12479018 and Android SDK 36.
+## Upstream and license
 
-1. Clone the Telegram source code with its submodules:
-   ```bash
-   git clone --recursive --shallow-submodules https://github.com/DrKLO/Telegram.git Telegram
-   ```
-   In case you forgot the `--recursive` flag, change to the `Telegram` directory and run:
-   ```bash
-   git submodule init && git submodule update --init --recursive --depth=1
-   ```
-2. Copy your release.keystore into TMessagesProj/config
-3. Fill out RELEASE_KEY_PASSWORD, RELEASE_KEY_ALIAS, RELEASE_STORE_PASSWORD in gradle.properties to access your  release.keystore
-4.  Go to https://console.firebase.google.com/, create two android apps with application IDs org.telegram.messenger and org.telegram.messenger.beta, turn on firebase messaging and download google-services.json, which should be copied to the same folder as TMessagesProj.
-5. Open the project in the Studio (note that it should be opened, NOT imported).
-6. Fill out values in TMessagesProj/src/main/java/org/telegram/messenger/BuildVars.java – there’s a link for each of the variables showing where and which data to obtain.
-7. You are ready to compile Telegram.
+Nivora is based on [Telegram for Android](https://github.com/TelegramOrg/Telegram-Android). The upstream source is licensed under GNU GPL v2. Nivora changes are published in this repository under the same license; see [LICENSE](LICENSE).
 
-### Localization
-
-We moved all translations to https://translations.telegram.org/en/android/. Please use it.
+Telegram is a trademark of its respective owner. Nivora is an unofficial third-party client.

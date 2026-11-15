@@ -148,6 +148,17 @@ android {
         minSdkVersion 23
         targetSdkVersion 36
 
+        def nivoraApiId = (project.findProperty("NIVORA_API_ID") ?: System.getenv("NIVORA_API_ID") ?: "0").toString()
+        def nivoraApiHash = (project.findProperty("NIVORA_API_HASH") ?: System.getenv("NIVORA_API_HASH") ?: "").toString()
+        if (!(nivoraApiId ==~ /[0-9]+/)) {
+            throw new GradleException("NIVORA_API_ID must contain digits only")
+        }
+        if (!nivoraApiHash.isEmpty() && !(nivoraApiHash ==~ /[0-9a-fA-F]{32}/)) {
+            throw new GradleException("NIVORA_API_HASH must be a 32-character hexadecimal value")
+        }
+        buildConfigField "int", "NIVORA_API_ID", nivoraApiId
+        buildConfigField "String", "NIVORA_API_HASH", "\"${nivoraApiHash}\""
+
         vectorDrawables.generatedDensities = ['mdpi', 'hdpi', 'xhdpi', 'xxhdpi']
 
         multiDexEnabled true
@@ -255,7 +266,9 @@ def getProps(String propName) {
         return "";
     }
 }
-apply plugin: 'com.google.gms.google-services'
+if (file('google-services.json').exists()) {
+    apply plugin: 'com.google.gms.google-services'
+}
 
 task checkVisibility {
     doFirst {
