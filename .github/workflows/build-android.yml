@@ -71,11 +71,11 @@ jobs:
 
           if [[ -n "$FIREBASE_JSON" ]]; then
             python - <<'PY'
-import json, os
-cfg = json.loads(os.environ['FIREBASE_JSON'])
-clients = cfg.get('client', [])
-assert any(c.get('client_info', {}).get('android_client_info', {}).get('package_name') == 'com.nivora.chat' for c in clients), 'Firebase config must contain Android package com.nivora.chat'
-PY
+          import json, os
+          cfg = json.loads(os.environ['FIREBASE_JSON'])
+          clients = cfg.get('client', [])
+          assert any(c.get('client_info', {}).get('android_client_info', {}).get('package_name') == 'com.nivora.chat' for c in clients), 'Firebase config must contain Android package com.nivora.chat'
+          PY
             printf '%s' "$FIREBASE_JSON" > TMessagesProj/google-services.json
             printf '%s' "$FIREBASE_JSON" > TMessagesProj_AppStandalone/google-services.json
           else
