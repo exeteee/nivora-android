@@ -17,7 +17,7 @@ permissions:
 
 jobs:
   build:
-    name: Validate source and build test APK when configured
+    name: Validate source and build private test APK
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
@@ -36,73 +36,76 @@ jobs:
           test -f TMessagesProj/src/main/res/drawable/ic_nivora_launcher.xml
           ! grep -q 'TelegramPremium' TMessagesProj/src/main/java/org/telegram/ui/SettingsActivity.java
           ! grep -q 'PREMIUM_GRACE' TMessagesProj/src/main/java/org/telegram/ui/SettingsActivity.java
+          test ! -f TMessagesProj/google-services.json
           test ! -f TMessagesProj_AppStandalone/google-services.json
           test ! -f TMessagesProj/config/release.keystore
 
-      - name: Check whether private build settings are available
+      - name: Configure Telegram API for a private test build
         id: config
         shell: bash
         env:
-          API_ID: ${{ secrets.NIVORA_API_ID }}
-          API_HASH: ${{ secrets.NIVORA_API_HASH }}
+          API_ID_SECRET: ${{ secrets.NIVORA_API_ID }}
+          API_HASH_SECRET: ${{ secrets.NIVORA_API_HASH }}
           FIREBASE_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+          MAPS_API_KEY: ${{ secrets.NIVORA_MAPS_API_KEY }}
         run: |
           set -euo pipefail
-          if [[ "$API_ID" =~ ^[1-9][0-9]*$ ]] &&
-             [[ "$API_HASH" =~ ^[0-9a-fA-F]{32}$ ]] &&
-             [[ -n "$FIREBASE_JSON" ]]; then
-            echo "build_ready=true" >> "$GITHUB_OUTPUT"
+          if [[ -z "$API_ID_SECRET" && -z "$API_HASH_SECRET" ]]; then
+            # Telegram explicitly ships this public sample API pair for development testing only.
+            API_ID=4
+            API_HASH=014b35b6184100b085b0d0572f9b5103
+            BUILD_MODE=telegram-sample-test
+            echo "::warning::Using Telegram's published sample API credentials. This APK is for private development testing only. Do not distribute it."
+          elif [[ "$API_ID_SECRET" =~ ^[1-9][0-9]*$ ]] && [[ "$API_HASH_SECRET" =~ ^[0-9a-fA-F]{32}$ ]]; then
+            API_ID="$API_ID_SECRET"
+            API_HASH="$API_HASH_SECRET"
+            BUILD_MODE=private-api-test
           else
-            echo "build_ready=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::APK build skipped. Add NIVORA_API_ID, NIVORA_API_HASH and GOOGLE_SERVICES_JSON to repository Actions secrets."
+            echo "::error::Provide both valid NIVORA_API_ID and NIVORA_API_HASH secrets, or leave both empty to use Telegram's sample test credentials."
+            exit 1
           fi
 
+          echo "NIVORA_API_ID=$API_ID" >> "$GITHUB_ENV"
+          echo "NIVORA_API_HASH=$API_HASH" >> "$GITHUB_ENV"
+          echo "NIVORA_MAPS_API_KEY=$MAPS_API_KEY" >> "$GITHUB_ENV"
+
+          if [[ -n "$FIREBASE_JSON" ]]; then
+            python - <<'PY'
+import json, os
+cfg = json.loads(os.environ['FIREBASE_JSON'])
+clients = cfg.get('client', [])
+assert any(c.get('client_info', {}).get('android_client_info', {}).get('package_name') == 'com.nivora.chat' for c in clients), 'Firebase config must contain Android package com.nivora.chat'
+PY
+            printf '%s' "$FIREBASE_JSON" > TMessagesProj/google-services.json
+            printf '%s' "$FIREBASE_JSON" > TMessagesProj_AppStandalone/google-services.json
+          else
+            echo "::notice::Firebase config not supplied. The APK can be built, but Firebase push notifications will not be configured."
+          fi
+
+          echo "build_mode=$BUILD_MODE" >> "$GITHUB_OUTPUT"
+
       - name: Set up Java 17
-        if: steps.config.outputs.build_ready == 'true'
         uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
 
       - name: Set up Android SDK
-        if: steps.config.outputs.build_ready == 'true'
         uses: android-actions/setup-android@v4
 
       - name: Install Android SDK, NDK and CMake
-        if: steps.config.outputs.build_ready == 'true'
         run: |
           sdkmanager "platforms;android-36" "build-tools;36.0.0" "ndk;27.2.12479018" "cmake;3.22.1"
 
       - name: Set up Gradle
-        if: steps.config.outputs.build_ready == 'true'
         uses: gradle/actions/setup-gradle@v6
         with:
           cache-read-only: false
 
-      - name: Prepare private app configuration
-        if: steps.config.outputs.build_ready == 'true'
-        shell: bash
-        env:
-          API_ID: ${{ secrets.NIVORA_API_ID }}
-          API_HASH: ${{ secrets.NIVORA_API_HASH }}
-          FIREBASE_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
-          MAPS_API_KEY: ${{ secrets.NIVORA_MAPS_API_KEY }}
-        run: |
-          set -euo pipefail
-          printf '%s' "$FIREBASE_JSON" > TMessagesProj_AppStandalone/google-services.json
-          python -m json.tool < TMessagesProj_AppStandalone/google-services.json > /dev/null
-          package_name="$(python -c 'import json; print(json.load(open("TMessagesProj_AppStandalone/google-services.json"))["client"][0]["client_info"]["android_client_info"]["package_name"])')"
-          test "$package_name" = "com.nivora.chat"
-          echo "NIVORA_API_ID=$API_ID" >> "$GITHUB_ENV"
-          echo "NIVORA_API_HASH=$API_HASH" >> "$GITHUB_ENV"
-          echo "NIVORA_MAPS_API_KEY=$MAPS_API_KEY" >> "$GITHUB_ENV"
-
       - name: Build Nivora Debug APK
-        if: steps.config.outputs.build_ready == 'true'
         run: ./gradlew --no-daemon --max-workers=2 --stacktrace :TMessagesProj_AppStandalone:assembleAfatDebug
 
       - name: Upload test APK
-        if: steps.config.outputs.build_ready == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: nivora-debug-apk
