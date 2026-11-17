@@ -14,6 +14,7 @@ concurrency:
 
 permissions:
   contents: read
+  actions: write
 
 jobs:
   build:
@@ -111,4 +112,27 @@ jobs:
           name: nivora-debug-apk
           path: TMessagesProj_AppStandalone/build/outputs/apk/**/*.apk
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 7
+
+      - name: Keep only the current Nivora APK artifact
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          current_id="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/artifacts" --jq '.artifacts[] | select(.name == "nivora-debug-apk") | .id' | head -n 1)"
+          if [[ -z "${current_id}" || "${current_id}" == "null" ]]; then
+            echo "No APK was uploaded by this run; leaving the existing artifact unchanged."
+            exit 0
+          fi
+          mapfile -t artifact_ids < <(
+            gh api --paginate "repos/${GITHUB_REPOSITORY}/actions/artifacts?per_page=100" \\
+              --jq '.artifacts[] | select(.name == "nivora-debug-apk") | .id'
+          )
+          for artifact_id in "${artifact_ids[@]}"; do
+            if [[ "${artifact_id}" != "${current_id}" ]]; then
+              echo "Deleting previous Nivora APK artifact: ${artifact_id}"
+              gh api --silent --method DELETE "repos/${GITHUB_REPOSITORY}/actions/artifacts/${artifact_id}"
+            fi
+          done
+
