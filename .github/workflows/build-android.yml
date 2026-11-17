@@ -120,19 +120,22 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          current_id="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/artifacts" --jq '.artifacts[] | select(.name == "nivora-debug-apk") | .id' | head -n 1)"
-          if [[ -z "${current_id}" || "${current_id}" == "null" ]]; then
-            echo "No APK was uploaded by this run; leaving the existing artifact unchanged."
+          artifact_records="$(gh api --paginate "repos/${GITHUB_REPOSITORY}/actions/artifacts?per_page=100" --jq '.artifacts[] | select(.name == "nivora-debug-apk") | [.created_at, .id] | @tsv')"
+          if [[ -z "${artifact_records}" ]]; then
+            echo "No Nivora APK artifacts found."
             exit 0
           fi
-          mapfile -t artifact_ids < <(
-            gh api --paginate "repos/${GITHUB_REPOSITORY}/actions/artifacts?per_page=100" \\
-              --jq '.artifacts[] | select(.name == "nivora-debug-apk") | .id'
-          )
-          for artifact_id in "${artifact_ids[@]}"; do
-            if [[ "${artifact_id}" != "${current_id}" ]]; then
-              echo "Deleting previous Nivora APK artifact: ${artifact_id}"
+          current_id="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/artifacts" --jq '.artifacts[] | select(.name == "nivora-debug-apk") | .id' | head -n 1 || true)"
+          if [[ -n "${current_id}" && "${current_id}" != "null" ]]; then
+            keep_id="${current_id}"
+          else
+            keep_id="$(printf '%s\n' "${artifact_records}" | sort -r | head -n 1 | cut -f 2)"
+            echo "No new APK was uploaded; keeping the newest existing artifact: ${keep_id}"
+          fi
+          while IFS=$'\t' read -r created_at artifact_id; do
+            if [[ "${artifact_id}" != "${keep_id}" ]]; then
+              echo "Deleting older Nivora APK artifact: ${artifact_id}"
               gh api --silent --method DELETE "repos/${GITHUB_REPOSITORY}/actions/artifacts/${artifact_id}"
             fi
-          done
+          done <<< "${artifact_records}"
 
